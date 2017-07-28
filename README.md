@@ -11,7 +11,7 @@ Self-damage is still applied and individual weapons can be enabled or disabled t
 
 Installation instructions:
 
-Paste the contents of the "addons/sourcemod" folder into the "tf2/tf/addons/sourcemod" folder.
+Paste the contents of the "addons/sourcemod" folder into the "tf2/tf/addons/sourcemod" folder found in the tf2 server installation.
 
 ---
 
