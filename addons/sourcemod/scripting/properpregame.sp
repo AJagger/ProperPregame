@@ -11,7 +11,7 @@ public Plugin:myinfo = {
 	author = PLUGIN_AUTHOR,
 	description = "Make pregame fun again",
 	version = PLUGIN_VERSION,
-	url = ""
+	url = "https://github.com/AJagger/ProperPregame"
 }
 
 new bool:bDisableStickies = true;
@@ -34,7 +34,8 @@ public OnClientPutInServer(client)
     SDKHook(client, SDKHook_OnTakeDamage, HandleDamage);
 }
 
-public handler_ConVarChange(Handle:convar, const String:oldValue[], const String:newValue[]) {
+public handler_ConVarChange(Handle:convar, const String:oldValue[], const String:newValue[]) 
+{
 	if (convar == hDisableStickies) 
 	{
 		if(StringToInt(newValue) == 0)
@@ -95,9 +96,7 @@ public bool DefIdIsStickyLauncher(defid)
 }
 
 public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype, &weapon, Float:damageForce[3], Float:damagePosition[3], damagecustom)
-{
-	//PrintToChatAll("Damage taken from weapon id %i", weapon);
-	
+{	
 	//Check to see if damage is caused by a sentry. Uses same logic (weapon = -1) as F2's Supplemental Stats
 	if(bDisableSentries && weapon == -1)
 	{
@@ -108,13 +107,13 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 				//Check to see if the damaged player is the engineer who owns the sentry
 				//If sentry owner is the victim, allow damage
 				if(victim == attacker){
-					PrintToChatAll("Attacking self with sentry");
+					//PrintToChatAll("Attacking self with sentry");
 					return Plugin_Continue;
 				}
 				//If sentry owner is not the victim, disallow damage
 				else
 				{
-					PrintToChatAll("Damage caused by sentry");
+					//PrintToChatAll("Damage caused by sentry");
 					return Plugin_Handled;
 				}
 			}
@@ -128,24 +127,24 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	if (IsValidEntity(weapon))
 	{
 		defid = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-		PrintToChatAll("defid = %i", defid);
+		//PrintToChatAll("defid = %i", defid);
 	}
 	else
 	{ 
-		PrintToChatAll("weapon %i invalid", weapon);
+		//PrintToChatAll("weapon %i invalid", weapon);
 		return Plugin_Continue;			
 	}
 	
 	//Check to see if the damage is caused by stickies
 	if(bDisableStickies && DefIdIsStickyLauncher(defid))
 	{
-		PrintToChatAll("Stickies Detected");
+		//PrintToChatAll("Stickies Detected");
 		//Check to see if the damaged player is the demo who shot the sticky			
 		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
 		{
 			//If demo is the victim, allow damage
 			if(victim == attacker){
-				PrintToChatAll("Allowing self-damage stickies");
+				//PrintToChatAll("Allowing self-damage stickies");
 				return Plugin_Continue;
 			}
 			//If the demo is not the victim, disallow damage
