@@ -1,3 +1,5 @@
+>This plugin is still a work-in-progress. I would advise against installing it on servers being used for league matches in the current state.
+
 # Proper Pregame
 TF2 SourceMod plugin to remove damage from certain problematic weapons within pregame.
 
