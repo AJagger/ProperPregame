@@ -1,9 +1,10 @@
 #include <sourcemod>
 #include <sdkhooks>
 #include <tf2_stocks>
+#undef REQUIRE_PLUGIN
 
 #define PLUGIN_NAME	"Proper Pregame"
-#define PLUGIN_AUTHOR	"Aidan Jagger"
+#define PLUGIN_AUTHOR	"Fishage"
 #define PLUGIN_VERSION	"1.0"
 
 public Plugin:myinfo = {
@@ -27,6 +28,15 @@ public OnPluginStart()
 	
 	HookConVarChange(hDisableStickies, handler_ConVarChange);
 	HookConVarChange(hDisableSentries, handler_ConVarChange);
+	
+	//Hook players already in the game. Used on plugin reload.
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientInGame(i) && !IsFakeClient(i))
+		{
+			SDKHook(i, SDKHook_OnTakeDamage, HandleDamage);
+		}
+	} 	
 }
 
 public OnClientPutInServer(client)
@@ -107,13 +117,11 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 				//Check to see if the damaged player is the engineer who owns the sentry
 				//If sentry owner is the victim, allow damage
 				if(victim == attacker){
-					//PrintToChatAll("Attacking self with sentry");
 					return Plugin_Continue;
 				}
 				//If sentry owner is not the victim, disallow damage
 				else
 				{
-					//PrintToChatAll("Damage caused by sentry");
 					return Plugin_Handled;
 				}
 			}
@@ -127,11 +135,10 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	if (IsValidEntity(weapon))
 	{
 		defid = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-		//PrintToChatAll("defid = %i", defid);
 	}
 	else
 	{ 
-		//PrintToChatAll("weapon %i invalid", weapon);
+		//Invalid weapon, ignore
 		return Plugin_Continue;			
 	}
 	
@@ -144,7 +151,6 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 		{
 			//If demo is the victim, allow damage
 			if(victim == attacker){
-				//PrintToChatAll("Allowing self-damage stickies");
 				return Plugin_Continue;
 			}
 			//If the demo is not the victim, disallow damage
