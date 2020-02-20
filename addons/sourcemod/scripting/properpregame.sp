@@ -17,17 +17,26 @@ public Plugin:myinfo = {
 
 new bool:bDisableStickies = true;
 new bool:bDisableSentries = true;
+new bool:bDisableAfterburn = true;
+new bool:bEnableEvilMedigun = false;
+
 new Handle:hDisableStickies = INVALID_HANDLE;
 new Handle:hDisableSentries = INVALID_HANDLE;
+new Handle:hDisableAfterburn = INVALID_HANDLE;
+new Handle:hEnableEvilMedigun = INVALID_HANDLE;
 
 public OnPluginStart()
 {
 	CreateConVar("pp", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_REPLICATED);
-	hDisableStickies = CreateConVar("pp_disablestickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
-	hDisableSentries = CreateConVar("pp_disablesentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
+	hDisableStickies = CreateConVar("pp_disableStickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
+	hDisableSentries = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
+	hDisableAfterburn = CreateConVar("pp_disableAfterburn", "1", "Disable afterburn damage", FCVAR_NOTIFY);
+	hEnableEvilMedigun = CreateConVar("pp_enableEvilMedigun", "1", "Enable Evil Medigun", FCVAR_NOTIFY);
 	
 	HookConVarChange(hDisableStickies, handler_ConVarChange);
 	HookConVarChange(hDisableSentries, handler_ConVarChange);
+	HookConVarChange(hDisableAfterburn, handler_ConVarChange);
+	HookConVarChange(hEnableEvilMedigun, handler_ConVarChange);
 	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
@@ -68,12 +77,35 @@ public handler_ConVarChange(Handle:convar, const String:oldValue[], const String
 			bDisableSentries = true;
 		}
 	}
+	else if (convar == hDisableAfterburn) 
+	{
+		if(StringToInt(newValue) == 0)
+		{
+			bDisableAfterburn = false;
+		}
+		else
+		{
+			bDisableAfterburn = true;
+		}
+	}
+	else if (convar == hEnableEvilMedigun) 
+	{
+		if(StringToInt(newValue) == 0)
+		{
+			bEnableEvilMedigun = false;
+		}
+		else
+		{
+			bEnableEvilMedigun = true;
+		}
+	}
 }
 
 public bool DefIdIsStickyLauncher(defid)
 {
 	//This is really fucking messy. Ideally would use defid to check for weapon_class == tf_weapon_pipebomblauncher but not sure how
 	if(defid == 20 || 		//StickyBomb Launcher
+		defid == 130 ||		//Scottish Resistance
 		defid == 207 ||		//Stickybomb Launcher (Renamed/Strange)
 		defid == 1150 ||	//The Quickiebomb Launcher
 		defid == 661 ||		//Festive Stickybomb Launcher 
@@ -98,6 +130,27 @@ public bool DefIdIsStickyLauncher(defid)
 		defid == 15137 ||	//Coffin Nail 
 		defid == 15138 ||	//Dressed to Kill 
 		defid == 15155)		//Blitzkrieg
+	{
+		return true;
+	}
+	
+	return false;	
+}
+
+public bool DefIdIsAfterburn(defid)
+{
+	//This is really fucking messy. Ideally would use defid to check for weapon_class == tf_weapon_pipebomblauncher but not sure how
+	if(defid == 308) 		//LochNLoad
+	{
+		return true;
+	}
+	
+	return false;	
+}
+
+public bool DefIdIsMedigun(defid)
+{
+	if(defid == 29) 		//Medigun
 	{
 		return true;
 	}
@@ -142,10 +195,12 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 		return Plugin_Continue;			
 	}
 	
+	//PrintToChatAll("%i", defid);
+	PrintToChatAll("%i", damagetype);
+	
 	//Check to see if the damage is caused by stickies
 	if(bDisableStickies && DefIdIsStickyLauncher(defid))
 	{
-		//PrintToChatAll("Stickies Detected");
 		//Check to see if the damaged player is the demo who shot the sticky			
 		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
 		{
@@ -159,6 +214,32 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 				return Plugin_Handled;
 			}
 		}					
+	}
+	
+	//Check to see if the damage is caused by afterburn
+	if(bDisableAfterburn && DefIdIsAfterburn(defid))
+	{
+		//Check to see if the damaged player is the demo who shot the sticky			
+		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
+		{
+			//If demo is the victim, allow damage
+			if(victim == attacker){
+				return Plugin_Continue;
+			}
+			//If the demo is not the victim, disallow damage
+			else
+			{
+				return Plugin_Handled;
+			}
+		}					
+	}
+	
+	//Check to see if the damage is caused by the scottish resistance
+	if(bEnableEvilMedigun && DefIdIsMedigun(defid))
+	{
+		//Reverse the healing
+		PrintToChatAll("Healing being done");
+		
 	}
 	
 	//If nothing caught, continue with no actions
