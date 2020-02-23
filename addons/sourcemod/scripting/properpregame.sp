@@ -38,6 +38,8 @@ public OnPluginStart()
 	HookConVarChange(hDisableAfterburn, handler_ConVarChange);
 	HookConVarChange(hEnableEvilMedigun, handler_ConVarChange);
 	
+	HookEvent("player_healed", Event_player_healed, EventHookMode_Post);
+	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -137,27 +139,6 @@ public bool DefIdIsStickyLauncher(defid)
 	return false;	
 }
 
-public bool DefIdIsAfterburn(defid)
-{
-	//This is really fucking messy. Ideally would use defid to check for weapon_class == tf_weapon_pipebomblauncher but not sure how
-	if(defid == 308) 		//LochNLoad
-	{
-		return true;
-	}
-	
-	return false;	
-}
-
-public bool DefIdIsMedigun(defid)
-{
-	if(defid == 29) 		//Medigun
-	{
-		return true;
-	}
-	
-	return false;	
-}
-
 public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype, &weapon, Float:damageForce[3], Float:damagePosition[3], damagecustom)
 {	
 	//Check to see if damage is caused by a sentry. Uses same logic (weapon = -1) as F2's Supplemental Stats
@@ -195,8 +176,7 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 		return Plugin_Continue;			
 	}
 	
-	//PrintToChatAll("%i", defid);
-	PrintToChatAll("%i", damagetype);
+    PrintToChatAll("damagetype: %i", damagetype );
 	
 	//Check to see if the damage is caused by stickies
 	if(bDisableStickies && DefIdIsStickyLauncher(defid))
@@ -217,31 +197,25 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	}
 	
 	//Check to see if the damage is caused by afterburn
-	if(bDisableAfterburn && DefIdIsAfterburn(defid))
+	if(bDisableAfterburn && damagetype == 2056)
 	{
-		//Check to see if the damaged player is the demo who shot the sticky			
-		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
-		{
-			//If demo is the victim, allow damage
-			if(victim == attacker){
-				return Plugin_Continue;
-			}
-			//If the demo is not the victim, disallow damage
-			else
-			{
-				return Plugin_Handled;
-			}
-		}					
-	}
-	
-	//Check to see if the damage is caused by the scottish resistance
-	if(bEnableEvilMedigun && DefIdIsMedigun(defid))
-	{
-		//Reverse the healing
-		PrintToChatAll("Healing being done");
 		
+		return Plugin_Handled;					
 	}
 	
 	//If nothing caught, continue with no actions
+	return Plugin_Continue;
+}
+
+public Action:Event_player_healed(Handle:event, const String:name[], bool:dontBroadcast) {
+	new patientId = GetEventInt(event, "patient");
+	new patient = GetClientOfUserId(patientId);
+	new amount = GetEventInt(event, "amount");
+
+	PrintToChatAll("%i healed %i", healerId, patientId)
+	new health = GetClientHealth(patient)-(amount * 2)
+	SetEntProp(patient, Prop_Send, "m_iHealth", health, 1);
+	SetEntProp(patient, Prop_Data, "m_iHealth", health, 1);
+	
 	return Plugin_Continue;
 }
