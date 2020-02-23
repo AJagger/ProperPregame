@@ -18,12 +18,10 @@ public Plugin:myinfo = {
 new bool:bDisableStickies = true;
 new bool:bDisableSentries = true;
 new bool:bDisableAfterburn = true;
-new bool:bEnableEvilMedigun = false;
 
 new Handle:hDisableStickies = INVALID_HANDLE;
 new Handle:hDisableSentries = INVALID_HANDLE;
 new Handle:hDisableAfterburn = INVALID_HANDLE;
-new Handle:hEnableEvilMedigun = INVALID_HANDLE;
 
 public OnPluginStart()
 {
@@ -31,12 +29,10 @@ public OnPluginStart()
 	hDisableStickies = CreateConVar("pp_disableStickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
 	hDisableSentries = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
 	hDisableAfterburn = CreateConVar("pp_disableAfterburn", "1", "Disable afterburn damage", FCVAR_NOTIFY);
-	hEnableEvilMedigun = CreateConVar("pp_enableEvilMedigun", "1", "Enable Evil Medigun", FCVAR_NOTIFY);
 	
 	HookConVarChange(hDisableStickies, handler_ConVarChange);
 	HookConVarChange(hDisableSentries, handler_ConVarChange);
 	HookConVarChange(hDisableAfterburn, handler_ConVarChange);
-	HookConVarChange(hEnableEvilMedigun, handler_ConVarChange);
 	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
@@ -88,17 +84,6 @@ public handler_ConVarChange(Handle:convar, const String:oldValue[], const String
 			bDisableAfterburn = true;
 		}
 	}
-	else if (convar == hEnableEvilMedigun) 
-	{
-		if(StringToInt(newValue) == 0)
-		{
-			bEnableEvilMedigun = false;
-		}
-		else
-		{
-			bEnableEvilMedigun = true;
-		}
-	}
 }
 
 public bool DefIdIsStickyLauncher(defid)
@@ -137,25 +122,9 @@ public bool DefIdIsStickyLauncher(defid)
 	return false;	
 }
 
-public bool DefIdIsAfterburn(defid)
+public bool DamageTypeIsAfterburn(damagetype)
 {
-	//This is really fucking messy. Ideally would use defid to check for weapon_class == tf_weapon_pipebomblauncher but not sure how
-	if(defid == 308) 		//LochNLoad
-	{
-		return true;
-	}
-	
-	return false;	
-}
-
-public bool DefIdIsMedigun(defid)
-{
-	if(defid == 29) 		//Medigun
-	{
-		return true;
-	}
-	
-	return false;	
+	return damagetype == 2056;
 }
 
 public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype, &weapon, Float:damageForce[3], Float:damagePosition[3], damagecustom)
@@ -196,7 +165,7 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	}
 	
 	//PrintToChatAll("%i", defid);
-	PrintToChatAll("%i", damagetype);
+	//PrintToChatAll("%i", damagetype);
 	
 	//Check to see if the damage is caused by stickies
 	if(bDisableStickies && DefIdIsStickyLauncher(defid))
@@ -217,29 +186,9 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	}
 	
 	//Check to see if the damage is caused by afterburn
-	if(bDisableAfterburn && DefIdIsAfterburn(defid))
+	if(bDisableAfterburn && DamageTypeIsAfterburn(damagetype))
 	{
-		//Check to see if the damaged player is the demo who shot the sticky			
-		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
-		{
-			//If demo is the victim, allow damage
-			if(victim == attacker){
-				return Plugin_Continue;
-			}
-			//If the demo is not the victim, disallow damage
-			else
-			{
-				return Plugin_Handled;
-			}
-		}					
-	}
-	
-	//Check to see if the damage is caused by the scottish resistance
-	if(bEnableEvilMedigun && DefIdIsMedigun(defid))
-	{
-		//Reverse the healing
-		PrintToChatAll("Healing being done");
-		
+		return Plugin_Handled;				
 	}
 	
 	//If nothing caught, continue with no actions
