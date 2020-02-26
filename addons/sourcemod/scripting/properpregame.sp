@@ -9,9 +9,16 @@
 
 enum Gamemode
 {
-	Unknown = 0,
+	UnknownLeague = 0,
 	Sixes = 1,
 	Highlander = 2
+}
+
+enum League
+{
+	Unknown = 0,
+	ETF2L = 1,
+	UGC = 2
 }
 
 public Plugin:myinfo = {
@@ -26,13 +33,24 @@ new bool:bDisableStickies = true;
 new bool:bDisableSentries = true;
 new bool:bDisableAfterburn = true;
 new bool:bDisableClassLimits = true;
-new int:iSetGamemode = -1;
+new int:iCurrentGamemode = -1;
+new int:iCurrentLeague = -1;
+new bool:bEditMode = false;
+
+new int:limit_scout = -1
+new int:limit_soldier = -1
+new int:limit_pyro = -1
+new int:limit_demoman = -1
+new int:limit_heavy = -1
+new int:limit_engineer = -1
+new int:limit_medic = -1
+new int:limit_sniper = -1
+new int:limit_spy = -1
 
 new Handle:hDisableStickies = INVALID_HANDLE;
 new Handle:hDisableSentries = INVALID_HANDLE;
 new Handle:hDisableAfterburn = INVALID_HANDLE;
 new Handle:hDisableClassLimits = INVALID_HANDLE;
-new Handle:hSetGamemode = INVALID_HANDLE;
 
 public OnPluginStart()
 {
@@ -41,17 +59,27 @@ public OnPluginStart()
 	hDisableSentries = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
 	hDisableAfterburn = CreateConVar("pp_disableAfterburn", "1", "Disable afterburn damage", FCVAR_NOTIFY);
 	hDisableClassLimits = CreateConVar("pp_disableClassLimits", "1", "Disable config-enforced class limits in pregame", FCVAR_NOTIFY);
-	hSetGamemode = CreateConVar("pp_setGamemode", "c", "Select a gamemode for ProperPregame to use when reinstating class limits", FCVAR_NOTIFY);
-	
 	
 	HookConVarChange(hDisableStickies, handler_ConVarChange);
 	HookConVarChange(hDisableSentries, handler_ConVarChange);
 	HookConVarChange(hDisableAfterburn, handler_ConVarChange);
 	HookConVarChange(hDisableClassLimits, handler_ConVarChange);
-	HookConVarChange(hSetGamemode, handler_ConVarChange);
 	
-	RegServerCmd("pp_getGamemode", GetGameModeType);
-	RegServerCmd("pp_removeClassLimits", RemoveClassLimits);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_scout"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_soldier"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_pyro"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_demoman"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_heavy"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_engineer"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_medic"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_sniper"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_spy"), handler_ClassLimitChange);
+	
+	RegServerCmd("pp_showClassLimits", ShowClassLimits);
+	RegServerCmd("pp_showStoredClassLimits", ShowStoredClassLimits);
+	
+	
+	AddCommandListener(execListener, "exec");
 	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
@@ -67,26 +95,19 @@ public OnPluginEnd()
 {
 	if(bDisableClassLimits)
 	{
-		if(iSetGamemode == -1)
-		{
-			iSetGamemode = DetermineGameModeType();
-		}
+		bEditMode = true;
 		
-		switch (iSetGamemode)
-		{
-			case Sixes:
-			{
-				EnforceEtf2l6v6ClassLimits();
-			}
-			case Highlander:
-			{
-				EnforceEtf2l9v9ClassLimits();
-			}
-			default:
-			{
-				PrintToChatAll("[ProperPregame] WARNING: Gamemode could not be established. No class limits have been enforced.");
-			}
-		}
+		SetConVarInt(FindConVar("tf_tournament_classlimit_scout"), limit_scout);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_soldier"), limit_soldier);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_pyro"), limit_pyro);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_demoman"), limit_demoman);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_heavy"), limit_heavy);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_engineer"), limit_engineer);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_medic"), limit_medic);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_sniper"), limit_sniper);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_spy"), limit_spy);
+		
+		PrintToChatAll("[ProperPregame] Class limits restored");
 	}
 }
 
@@ -99,63 +120,88 @@ public handler_ConVarChange(Handle:convar, const String:oldValue[], const String
 {
 	if (convar == hDisableStickies) 
 	{
-		if(StringToInt(newValue) == 0)
-		{
-			bDisableStickies = false;
-		}
-		else
-		{
-			bDisableStickies = true;
-		}
+		bDisableStickies = !(StringToInt(newValue) == 0)
 	} 
 	else if (convar == hDisableSentries) 
 	{
-		if(StringToInt(newValue) == 0)
-		{
-			bDisableSentries = false;
-		}
-		else
-		{
-			bDisableSentries = true;
-		}
+		bDisableSentries = !(StringToInt(newValue) == 0)
 	}
 	else if (convar == hDisableAfterburn) 
 	{
-		if(StringToInt(newValue) == 0)
-		{
-			bDisableAfterburn = false;
-		}
-		else
-		{
-			bDisableAfterburn = true;
-		}
+		bDisableAfterburn = !(StringToInt(newValue) == 0)
 	}
 	else if (convar == hDisableClassLimits) 
 	{
-		if(StringToInt(newValue) == 0)
-		{
-			bDisableClassLimits = false;
-		}
-		else
-		{
-			bDisableClassLimits = true;
-		}
+		bDisableClassLimits = !(StringToInt(newValue) == 0)
 	}
-	else if (convar == hSetGamemode) 
+}
+
+public handler_ClassLimitChange(Handle:convar, const String:oldValue[], const String:newValue[]) 
+{
+	if(convar == FindConVar("tf_tournament_classlimit_scout") && !bEditMode)
 	{
-		if(StrEqual(newValue, "6v6", false) || StrEqual(newValue, "6", false))
-		{
-			iSetGamemode = Sixes;
-		}
-		else if(StrEqual(newValue, "9v9", false) || StrEqual(newValue, "9", false))
-		{
-			iSetGamemode = Highlander;
-		}
-		else if(StrEqual(newValue, "clear", false) || StrEqual(newValue, "c", false))
-		{
-			iSetGamemode = -1;
-		}
+		bEditMode = true;
+		limit_scout = StringToInt(newValue);
+		SetConVarInt(FindConVar("tf_tournament_classlimit_scout"), -1);	
 	}
+	else if(convar == FindConVar("tf_tournament_classlimit_soldier") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_soldier = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_soldier"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_pyro") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_pyro = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_pyro"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_demoman") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_demoman = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_demoman"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_heavy") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_heavy = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_heavy"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_engineer") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_engineer = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_engineer"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_medic") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_medic = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_medic"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_sniper") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_sniper = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_sniper"), -1);	
+	}
+	else if(convar == FindConVar("tf_tournament_classlimit_spy") && !bEditMode)
+	{
+		bEditMode = true;
+		limit_spy = StringToInt(newValue);
+		bEditMode = true;
+		SetConVarInt(FindConVar("tf_tournament_classlimit_spy"), -1);	
+	}
+	
+	bEditMode = false;
 }
 
 public bool DefIdIsStickyLauncher(defid)
@@ -267,87 +313,68 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	return Plugin_Continue;
 }
 
-public Action GetGameModeType(int args)
+public Action ShowClassLimits(int args)
 {
-	PrintToChatAll("%i", DetermineGameModeType());
-}
-
-public Action RemoveClassLimits(int args)
-{
-	ServerCommand("tf_tournament_classlimit_scout -1");
-	ServerCommand("tf_tournament_classlimit_soldier -1");
-	ServerCommand("tf_tournament_classlimit_pyro -1");
-	ServerCommand("tf_tournament_classlimit_demoman -1");
-	ServerCommand("tf_tournament_classlimit_heavy -1");
-	ServerCommand("tf_tournament_classlimit_engineer -1");
-	ServerCommand("tf_tournament_classlimit_medic -1");
-	ServerCommand("tf_tournament_classlimit_sniper -1");
-	ServerCommand("tf_tournament_classlimit_spy -1");
-	
-	PrintToChatAll("[ProperPregame] Config-enforced class limits removed.");
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_scout")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_soldier")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_pyro")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_demoman")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_heavy")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_engineer")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_medic")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_sniper")));
+	PrintToChatAll("%i", GetConVarInt(FindConVar("tf_tournament_classlimit_spy")));
 	
 	return Plugin_Handled;
 }
 
-EnforceEtf2l6v6ClassLimits()
+public Action ShowStoredClassLimits(int args)
 {
-	ServerCommand("tf_tournament_classlimit_scout 2");
-	ServerCommand("tf_tournament_classlimit_soldier 2");
-	ServerCommand("tf_tournament_classlimit_pyro 1");
-	ServerCommand("tf_tournament_classlimit_demoman 1");
-	ServerCommand("tf_tournament_classlimit_heavy 1");
-	ServerCommand("tf_tournament_classlimit_engineer 1");
-	ServerCommand("tf_tournament_classlimit_medic 1");
-	ServerCommand("tf_tournament_classlimit_sniper 1");
-	ServerCommand("tf_tournament_classlimit_spy 2");
+	PrintToChatAll("%i", limit_scout);
+	PrintToChatAll("%i", limit_soldier);
+	PrintToChatAll("%i", limit_pyro);
+	PrintToChatAll("%i", limit_demoman);
+	PrintToChatAll("%i", limit_heavy);
+	PrintToChatAll("%i", limit_engineer);
+	PrintToChatAll("%i", limit_medic);
+	PrintToChatAll("%i", limit_sniper);
+	PrintToChatAll("%i", limit_spy);
 	
-	PrintToChatAll("[ProperPregame] ETF2L 6v6 class limits re-enabled.");
+	return Plugin_Handled;
 }
 
-EnforceEtf2l9v9ClassLimits()
+public Action:execListener(client, const String:cmd[], argc)
 {
-	ServerCommand("tf_tournament_classlimit_scout 1");
-	ServerCommand("tf_tournament_classlimit_soldier 1");
-	ServerCommand("tf_tournament_classlimit_pyro 1");
-	ServerCommand("tf_tournament_classlimit_demoman 1");
-	ServerCommand("tf_tournament_classlimit_heavy 1");
-	ServerCommand("tf_tournament_classlimit_engineer 1");
-	ServerCommand("tf_tournament_classlimit_medic 1");
-	ServerCommand("tf_tournament_classlimit_sniper 1");
-	ServerCommand("tf_tournament_classlimit_spy 1");
-	
-	PrintToChatAll("[ProperPregame] ETF2L 9v9 class limits re-enabled.");
-}
-
-public int DetermineGameModeType()
-{
-	new redCount = GetTeamClientCount(2);
-	new bluCount = GetTeamClientCount(3);
-	
-	new avgTeamSize = (redCount + bluCount)/2
-	
-	if (avgTeamSize == 6)
+	if(StrEqual(cmd, "exec", false))
 	{
-		return Sixes;
-	}	
-	else if (avgTeamSize == 9)
-	{
-		return Highlander;
-	}
-	else
-	{
-		//If number of players are not exactly 6v6 or 9v9 then fuzzy match to gamemode or select unknown if the difference is too great.
-		if(4 < avgTeamSize < 8)
+		new String:cfgName[50]
+		GetCmdArgString(cfgName, sizeof(cfgName))
+		PrintToChatAll(cfgName);
+		
+		if(StrContains(cfgName, "ETF2L", false) >= 0 || StrContains(cfgName, "UGC", false) >= 0)
 		{
-			return Sixes;
-		}
-		else if(7 < avgTeamSize < 11)
-		{
-			return Highlander;
-		}
-		else
-		{
-			return Unknown;
+			if(StrContains(cfgName, "6v6", false) >= 0 || StrContains(cfgName, "9v9", false) >= 0 )
+			{
+				if(StrContains(cfgName, "ETF2L", false) >= 0)
+				{
+					PrintToChatAll("[ProperPregame] ETF2L Config Detected");
+				}
+				else
+				{
+					PrintToChatAll("[ProperPregame] UGC Config Detected");
+				}
+				
+				if(StrContains(cfgName, "6v6", false) >= 0)
+				{
+					PrintToChatAll("[ProperPregame] 6v6 Config Detected");
+				}
+				else
+				{
+					PrintToChatAll("[ProperPregame] 9v9 Config Detected");
+				}
+			}
 		}
 	}
+	
+	return Plugin_Continue;
 }
