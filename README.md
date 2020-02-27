@@ -19,8 +19,6 @@ Removes damage from:
   
 Self-damage is still applied and individual weapons/damage types can be enabled or disabled through console variables.
 
----
-
 ## Installation instructions:
 
 [Step 1] Plugin installation:
@@ -30,8 +28,6 @@ Self-damage is still applied and individual weapons/damage types can be enabled 
 * Paste the contents of the "cfg" folder into the "tf2/tf/cfg" folder found in the tf2 server installation.
 **OR** to do it manually:
 * Add "sm plugins unload properpregame" to the "soap_live.cfg" config file and "sm plugins load properpregame" to the "soap_notlive.cfg" config file.
-
----
 
 ## Configuration:
 
