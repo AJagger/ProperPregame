@@ -5,7 +5,7 @@
 
 #define PLUGIN_NAME	"Proper Pregame"
 #define PLUGIN_AUTHOR	"Fishage"
-#define PLUGIN_VERSION	"2.0"
+#define PLUGIN_VERSION	"2.1"
 
 public Plugin:myinfo = {
 	name = PLUGIN_NAME,
@@ -63,6 +63,8 @@ public OnPluginStart()
 	HookConVarChange(FindConVar("tf_tournament_classlimit_medic"), ClassLimitChangeHandler);
 	HookConVarChange(FindConVar("tf_tournament_classlimit_sniper"), ClassLimitChangeHandler);
 	HookConVarChange(FindConVar("tf_tournament_classlimit_spy"), ClassLimitChangeHandler);
+	
+	AddCommandListener(execListener, "exec");
 	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
@@ -284,6 +286,21 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	return Plugin_Continue;
 }
 
+// UGC does not use class limits. Since the cvar will not be changed from -1 when the config is executed then the hook will not be triggered
+// and so the previous config's class limits will be reinstated.
+// Check to see if the UGC config is executed and clear the stored limits.
+public Action:execListener(client, const String:cmd[], argc)
+{
+	new String:cfgName[50]
+	GetCmdArgString(cfgName, sizeof(cfgName))
+	
+	if(StrContains(cfgName, "UGC", false) >= 0)
+	{
+		ClearStoredClassLimits();
+		PrintToChatAll("[ProperPregame] UGC config detected, no class limits will be applied.");
+	}
+}
+
 public EnableExistingClassLimits()
 {
 	editMode = true;
@@ -344,4 +361,17 @@ public DisableExistingClassLimits()
 
 	limitSpy = GetConVarInt(FindConVar("tf_tournament_classlimit_spy"));
 	SetConVarInt(FindConVar("tf_tournament_classlimit_spy"), -1);
+}
+
+public ClearStoredClassLimits()
+{
+	limitScout = -1;
+	limitSoldier = -1;
+	limitPyro = -1;
+	limitDemoman = -1;
+	limitHeavy = -1;
+	limitEngineer = -1;
+	limitMedic = -1;
+	limitSniper = -1;
+	limitSpy = -1;
 }
