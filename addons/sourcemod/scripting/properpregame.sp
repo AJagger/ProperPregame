@@ -15,11 +15,11 @@ public Plugin:myinfo = {
 	url = "https://github.com/AJagger/ProperPregame"
 }
 
-new bool:bDisableStickies = true;
-new bool:bDisableSentries = true;
-new bool:bDisableAfterburn = false;
-new bool:bDisableClassLimits = true;
-new bool:bEditMode = false;
+new bool:disableStickies = true;
+new bool:disableSentries = true;
+new bool:disableAfterburn = false;
+new bool:disableClassLimits = true;
+new bool:editMode = false;
 
 new int:limitScout = -1
 new int:limitSoldier = -1
@@ -31,38 +31,38 @@ new int:limitMedic = -1
 new int:limitSniper = -1
 new int:limitSpy = -1
 
-new Handle:hDisableStickies = INVALID_HANDLE;
-new Handle:hDisableSentries = INVALID_HANDLE;
-new Handle:hDisableAfterburn = INVALID_HANDLE;
-new Handle:hDisableClassLimits = INVALID_HANDLE;
+new Handle:disableStickiesHandle = INVALID_HANDLE;
+new Handle:disableSentriesHandle = INVALID_HANDLE;
+new Handle:disableAfterburnHandle = INVALID_HANDLE;
+new Handle:disableClassLimitsHandle = INVALID_HANDLE;
 
 public OnPluginStart()
 {
 	CreateConVar("pp", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_REPLICATED);
-	hDisableStickies = CreateConVar("pp_disableStickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
-	hDisableSentries = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
-	hDisableAfterburn = CreateConVar("pp_disableAfterburn", "0", "Disable afterburn damage", FCVAR_NOTIFY);
-	hDisableClassLimits = CreateConVar("pp_disableClassLimits", "1", "Disable config-enforced class limits in pregame", FCVAR_NOTIFY);
+	disableStickiesHandle = CreateConVar("pp_disableStickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
+	disableSentriesHandle = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
+	disableAfterburnHandle = CreateConVar("pp_disableAfterburn", "0", "Disable afterburn damage", FCVAR_NOTIFY);
+	disableClassLimitsHandle = CreateConVar("pp_disableClassLimits", "1", "Disable config-enforced class limits in pregame", FCVAR_NOTIFY);
 	
-	HookConVarChange(hDisableStickies, handler_ConVarChange);
-	HookConVarChange(hDisableSentries, handler_ConVarChange);
-	HookConVarChange(hDisableAfterburn, handler_ConVarChange);
-	HookConVarChange(hDisableClassLimits, handler_ConVarChange);
+	HookConVarChange(disableStickiesHandle, ConVarChangeHandler);
+	HookConVarChange(disableSentriesHandle, ConVarChangeHandler);
+	HookConVarChange(disableAfterburnHandle, ConVarChangeHandler);
+	HookConVarChange(disableClassLimitsHandle, ConVarChangeHandler);
 	
-	if(bDisableClassLimits)
+	if(disableClassLimits)
 	{
 		DisableExistingClassLimits();
 	}
 	
-	HookConVarChange(FindConVar("tf_tournament_classlimit_scout"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_soldier"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_pyro"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_demoman"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_heavy"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_engineer"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_medic"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_sniper"), handler_ClassLimitChange);
-	HookConVarChange(FindConVar("tf_tournament_classlimit_spy"), handler_ClassLimitChange);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_scout"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_soldier"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_pyro"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_demoman"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_heavy"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_engineer"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_medic"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_sniper"), ClassLimitChangeHandler);
+	HookConVarChange(FindConVar("tf_tournament_classlimit_spy"), ClassLimitChangeHandler);
 	
 	//Hook players already in the game. Used on plugin reload.
 	for (int i = 1; i <= MaxClients; i++)
@@ -76,7 +76,7 @@ public OnPluginStart()
 
 public OnPluginEnd()
 {
-	if(bDisableClassLimits)
+	if(disableClassLimits)
 	{
 		EnableExistingClassLimits();
 	}
@@ -87,95 +87,95 @@ public OnClientPutInServer(client)
     SDKHook(client, SDKHook_OnTakeDamage, HandleDamage);
 }
 
-public handler_ConVarChange(Handle:convar, const String:oldValue[], const String:newValue[]) 
+public ConVarChangeHandler(Handle:convar, const String:oldValue[], const String:newValue[]) 
 {
-	if (convar == hDisableStickies) 
+	if (convar == disableStickiesHandle) 
 	{
-		bDisableStickies = !(StringToInt(newValue) == 0)
+		disableStickies = !(StringToInt(newValue) == 0)
 	} 
-	else if (convar == hDisableSentries) 
+	else if (convar == disableSentriesHandle) 
 	{
-		bDisableSentries = !(StringToInt(newValue) == 0)
+		disableSentries = !(StringToInt(newValue) == 0)
 	}
-	else if (convar == hDisableAfterburn) 
+	else if (convar == disableAfterburnHandle) 
 	{
-		bDisableAfterburn = !(StringToInt(newValue) == 0)
+		disableAfterburn = !(StringToInt(newValue) == 0)
 	}
-	else if (convar == hDisableClassLimits) 
+	else if (convar == disableClassLimitsHandle) 
 	{
 		if(StringToInt(newValue) == 0)
 		{
 			EnableExistingClassLimits();
-			bDisableClassLimits = false;	
+			disableClassLimits = false;	
 		}
 		else
 		{
-			bDisableClassLimits = true;
+			disableClassLimits = true;
 			DisableExistingClassLimits();
 		}
 	}
 }
 
-public handler_ClassLimitChange(Handle:convar, const String:oldValue[], const String:newValue[]) 
+public ClassLimitChangeHandler(Handle:convar, const String:oldValue[], const String:newValue[]) 
 {
-	if(bDisableClassLimits)
+	if(disableClassLimits && !editMode)
 	{
-		if(convar == FindConVar("tf_tournament_classlimit_scout") && !bEditMode)
+		if(convar == FindConVar("tf_tournament_classlimit_scout"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitScout = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_scout"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_soldier") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_soldier"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitSoldier = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_soldier"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_pyro") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_pyro"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitPyro = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_pyro"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_demoman") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_demoman"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitDemoman = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_demoman"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_heavy") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_heavy"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitHeavy = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_heavy"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_engineer") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_engineer"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitEngineer = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_engineer"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_medic") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_medic"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitMedic = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_medic"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_sniper") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_sniper"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitSniper = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_sniper"), -1);	
 		}
-		else if(convar == FindConVar("tf_tournament_classlimit_spy") && !bEditMode)
+		else if(convar == FindConVar("tf_tournament_classlimit_spy"))
 		{
-			bEditMode = true;
+			editMode = true;
 			limitSpy = StringToInt(newValue);
 			SetConVarInt(FindConVar("tf_tournament_classlimit_spy"), -1);	
 		}
 		
-		bEditMode = false;
+		editMode = false;
 	}
 }
 
@@ -222,7 +222,7 @@ public bool DamageTypeIsAfterburn(damagetype)
 public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype, &weapon, Float:damageForce[3], Float:damagePosition[3], damagecustom)
 {	
 	//Check to see if damage is caused by a sentry. Uses same logic (weapon = -1) as F2's Supplemental Stats
-	if(bDisableSentries && weapon == -1)
+	if(disableSentries && weapon == -1)
 	{
 		if (inflictor > MaxClients && IsValidEntity(inflictor))
 		{			
@@ -257,7 +257,7 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	}
 	
 	//Check to see if the damage is caused by stickies
-	if(bDisableStickies && DefIdIsStickyLauncher(defid))
+	if(disableStickies && DefIdIsStickyLauncher(defid))
 	{
 		//Check to see if the damaged player is the demo who shot the sticky			
 		if(victim <= MAXPLAYERS && attacker <= MAXPLAYERS)
@@ -275,7 +275,7 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 	}
 	
 	//Check to see if the damage is caused by afterburn
-	if(bDisableAfterburn && DamageTypeIsAfterburn(damagetype))
+	if(disableAfterburn && DamageTypeIsAfterburn(damagetype))
 	{
 		return Plugin_Handled;				
 	}
@@ -286,31 +286,31 @@ public Action HandleDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 
 public EnableExistingClassLimits()
 {
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_scout"), limitScout);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_soldier"), limitSoldier);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_pyro"), limitPyro);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_demoman"), limitDemoman);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_heavy"), limitHeavy);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_engineer"), limitEngineer);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_medic"), limitMedic);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_sniper"), limitSniper);
 	
-	bEditMode = true;
+	editMode = true;
 	SetConVarInt(FindConVar("tf_tournament_classlimit_spy"), limitSpy);
 	
 	PrintToChatAll("[ProperPregame] Class limits restored.");
