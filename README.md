@@ -2,16 +2,16 @@
 
 # Proper Pregame
 
-##About
+## About
 ProperPregame is a fully configurable TF2 SourceMod plugin aimed at improving the competitive pregame experience.
 
-##Features
-###Class Limit Removal
+## Features
+### Class Limit Removal
 Some league configs add class limits which prevent players from selecting specific classes when a certain number of players are already playing that class.
 
 ProperPregame will remove these class limits during pregame and will apply them when teams ready up, or when this feature is disabled.
 
-###Damage Removal
+### Damage Removal
 Removes damage from:
   - Sentry guns
   - Stickybombs
@@ -21,7 +21,7 @@ Self-damage is still applied and individual weapons/damage types can be enabled 
 
 ---
 
-##Installation instructions:
+## Installation instructions:
 
 [Step 1] Plugin installation:
 * Paste the contents of the "addons" folder into the "tf2/tf/addons" folder found in the tf2 server installation.
@@ -33,7 +33,7 @@ Self-damage is still applied and individual weapons/damage types can be enabled 
 
 ---
 
-##Configuration:
+## Configuration:
 
 Proper Pregame can be configured using the following cvars to enable/disable damage from the effected weapons. Setting these cvars to 1 will enable the feature, setting the cvar to 0 will disable the feature.
 
