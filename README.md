@@ -12,10 +12,10 @@ Some league configs add class limits which prevent players from selecting specif
 ProperPregame will remove these class limits during pregame and will apply them when teams ready up, or when this feature is disabled.
 
 ### Damage Removal
-Removes damage from:
-  - Sentry guns
-  - Stickybombs
-  - Afterburn
+Ability to remove damage from:
+  - Sentry guns (Enabled by default)
+  - Stickybombs (Disabled by default)
+  - Afterburn (Disabled by default)
   
 Self-damage is still applied and individual weapons/damage types can be enabled or disabled through console variables.
 
@@ -29,7 +29,7 @@ Self-damage is still applied and individual weapons/damage types can be enabled 
 **OR** to do it manually:
 * Add "sm plugins unload properpregame" to the "soap_live.cfg" config file and "sm plugins load properpregame" to the "soap_notlive.cfg" config file.
 
-## Configuration:
+## Configuration & Commands:
 
 Proper Pregame can be configured using the following cvars to enable/disable damage from the effected weapons. Setting these cvars to 1 will enable the feature, setting the cvar to 0 will disable the feature.
 
@@ -37,6 +37,9 @@ Proper Pregame can be configured using the following cvars to enable/disable dam
 * pp_disablesentries
 * pp_disableAfterburn
 * pp_disableClassLimits
+
+To find the currently saved class limits without having to unload the plugin/disable the class limits feature, the following command can be used to print them:
+* pp_classLimits
 
 ---
 
