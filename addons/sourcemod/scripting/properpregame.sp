@@ -5,7 +5,7 @@
 
 #define PLUGIN_NAME	"Proper Pregame"
 #define PLUGIN_AUTHOR	"Fishage"
-#define PLUGIN_VERSION	"2.2-alpha"
+#define PLUGIN_VERSION	"2.2"
 
 public Plugin:myinfo = {
 	name = PLUGIN_NAME,
@@ -131,7 +131,6 @@ public ConVarChangeHandler(Handle:convar, const String:oldValue[], const String:
 
 public ClassLimitChangeHandler(Handle:convar, const String:oldValue[], const String:newValue[]) 
 {
-	//PrintToChatAll("Class Limit Change Detected %i. DEBUG: disableClassLimits %b, editMode %b", StringToInt(newValue), disableClassLimits, editMode);
 	if(disableClassLimits && !editMode)
 	{
 		if(convar == FindConVar("tf_tournament_classlimit_scout"))
