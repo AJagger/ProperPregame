@@ -5,7 +5,7 @@
 
 #define PLUGIN_NAME	"Proper Pregame"
 #define PLUGIN_AUTHOR	"Fishage"
-#define PLUGIN_VERSION	"2.2"
+#define PLUGIN_VERSION	"2.2.1"
 
 public Plugin:myinfo = {
 	name = PLUGIN_NAME,
@@ -50,7 +50,7 @@ public OnPluginStart()
 	limitSpy = disabledClassLimitValue;
 	
 	CreateConVar("pp", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_REPLICATED);
-	disableStickiesHandle = CreateConVar("pp_disableStickies", "1", "Disable sticky damage", FCVAR_NOTIFY);
+	disableStickiesHandle = CreateConVar("pp_disableStickies", "0", "Disable sticky damage", FCVAR_NOTIFY);
 	disableSentriesHandle = CreateConVar("pp_disableSentries", "1", "Disable sentry damage", FCVAR_NOTIFY);
 	disableAfterburnHandle = CreateConVar("pp_disableAfterburn", "0", "Disable afterburn damage", FCVAR_NOTIFY);
 	disableClassLimitsHandle = CreateConVar("pp_disableClassLimits", "1", "Disable config-enforced class limits in pregame", FCVAR_NOTIFY);

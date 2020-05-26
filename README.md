@@ -31,7 +31,7 @@ Self-damage is still applied and individual weapons/damage types can be enabled 
 
 ## Configuration & Commands:
 
-Proper Pregame can be configured using the following cvars to enable/disable damage from the effected weapons. Setting these cvars to 1 will enable the feature, setting the cvar to 0 will disable the feature.
+Proper Pregame can be configured using the following cvars to enable/disable damage from the effected weapons. Setting these cvars to 1 will enable the feature, setting the cvar to 0 will disable the feature. These can be added to your server.cfg file so that they are applied every time the server starts.
 
 * pp_disablestickies
 * pp_disablesentries
