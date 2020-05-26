@@ -13,9 +13,9 @@ ProperPregame will remove these class limits during pregame and will apply them 
 
 ### Damage Removal
 Ability to remove damage from:
-  - Sentry guns (Enabled by default)
-  - Stickybombs (Disabled by default)
-  - Afterburn (Disabled by default)
+  - Sentry guns (Feature enabled/damage disabled by default)
+  - Stickybombs (Feature disabled/damage enabled by default)
+  - Afterburn (Feature disabled/damage enabled by default)
   
 Self-damage is still applied and individual weapons/damage types can be enabled or disabled through console variables.
 
